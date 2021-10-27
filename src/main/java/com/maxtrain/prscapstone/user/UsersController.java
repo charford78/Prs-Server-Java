@@ -52,6 +52,9 @@ public class UsersController {
 	@PutMapping("{id}")
 	public ResponseEntity Update(@PathVariable int id, @RequestBody User user) {
 		
+		if(user == null) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
 		if(user.getId() != id) {
 			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
@@ -63,21 +66,23 @@ public class UsersController {
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 	
-	@SuppressWarnings("rawtypes")
 	@DeleteMapping("{id}")
-	public ResponseEntity Delete(@PathVariable int id) {
+	public ResponseEntity<User> Delete(@PathVariable int id) {
 		var user = userRepo.findById(id);
 		if(user.isEmpty()) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		userRepo.deleteById(id);
-		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+		return new ResponseEntity<User>(user.get(), HttpStatus.OK);
 	}
 	
 	@GetMapping("{username}/{password}")
-	public ResponseEntity<User> Login(@PathVariable String username, @PathVariable String password){
+	public ResponseEntity<User> Login(@PathVariable String username, @PathVariable String password) {
 		var user = userRepo.findByUsernameAndPassword(username, password);
 		if(user.isEmpty()) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		if(!user.get().getPassword().equals(password)) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		return new ResponseEntity<User>(user.get(), HttpStatus.OK);
