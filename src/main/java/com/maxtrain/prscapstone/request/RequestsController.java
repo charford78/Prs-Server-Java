@@ -79,6 +79,17 @@ public class RequestsController {
 		return new ResponseEntity<Request>(request.get(), HttpStatus.OK);
 	}
 	
+	@GetMapping("user/{userId}")
+	public ResponseEntity<Iterable<Request>> GetRequestsInReview(@PathVariable int userId){
+		
+		var user = reqRepo.findByUserId(userId);
+		if(user.isEmpty()) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		var requests = reqRepo.findByUserIdNot(userId);
+		return new ResponseEntity<Iterable<Request>>(requests, HttpStatus.OK);
+	}
+	
 	@SuppressWarnings("rawtypes")
 	@PutMapping("review/{id}")
 	public ResponseEntity SetStatusToReview(@PathVariable int id, @RequestBody Request request) {
