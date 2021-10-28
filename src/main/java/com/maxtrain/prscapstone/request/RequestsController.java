@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.maxtrain.prscapstone.user.UserRepository;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/api/requests")
@@ -20,6 +22,8 @@ public class RequestsController {
 	
 	@Autowired
 	private RequestRepository reqRepo;
+	@Autowired
+	private UserRepository userRepo;
 	
 	@GetMapping
 	public ResponseEntity<Iterable<Request>> GetAll(){
@@ -82,11 +86,11 @@ public class RequestsController {
 	@GetMapping("user/{userId}")
 	public ResponseEntity<Iterable<Request>> GetRequestsInReview(@PathVariable int userId){
 		
-		var user = reqRepo.findByUserId(userId);
+		var user = userRepo.findById(userId);
 		if(user.isEmpty()) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		var requests = reqRepo.findByUserIdNot(userId);
+		var requests = reqRepo.findByStatusAndUserIdNot("REVIEW", userId);
 		return new ResponseEntity<Iterable<Request>>(requests, HttpStatus.OK);
 	}
 	
@@ -106,6 +110,34 @@ public class RequestsController {
 		}
 		var newStatus = (request.getTotal() <= 50) ? "APPROVED" : "REVIEW";
 		request.setStatus(newStatus);
+		return Update(id, request);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	@PutMapping("approve/{id}")
+	public ResponseEntity SetStatusToApproved(@PathVariable int id, @RequestBody Request request) {
+		if(request.getId() != id) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		var oldRequest = reqRepo.findById(request.getId());
+		if(oldRequest.isEmpty()) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		request.setStatus("APPROVED");
+		return Update(id, request);
+	}
+	
+	@SuppressWarnings("rawtypes")
+	@PutMapping("reject/{id}")
+	public ResponseEntity SetStatusToRejected(@PathVariable int id, @RequestBody Request request) {
+		if(request.getId() != id) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		var oldRequest = reqRepo.findById(request.getId());
+		if(oldRequest.isEmpty()) {
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		request.setStatus("REJECTED");
 		return Update(id, request);
 	}
 }
