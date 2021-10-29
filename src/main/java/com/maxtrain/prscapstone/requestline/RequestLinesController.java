@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.maxtrain.prscapstone.product.ProductRepository;
 import com.maxtrain.prscapstone.request.RequestRepository;
 
 @CrossOrigin
@@ -24,6 +25,8 @@ public class RequestLinesController {
 	private RequestLineRepository reqlineRepo;
 	@Autowired
 	private RequestRepository reqRepo;
+	@Autowired
+	private ProductRepository prodRepo;
 	
 	@GetMapping
 	public ResponseEntity<Iterable<RequestLine>> GetAll(){
@@ -89,9 +92,11 @@ public class RequestLinesController {
 			throw new Exception("Request Id is invalid!");
 		}
 		var request = optRequest.get();
-		var requestLines = reqlineRepo.findRequestlineByRequestId(requestId);
-		var total = 0;
+		var requestLines = reqlineRepo.findRequestLineByRequestId(requestId);
+		var total = 0.0;
 		for(var reqLine : requestLines) {
+			var product = prodRepo.findById(reqLine.getProduct().getId()).get();
+			reqLine.setProduct(product);
 			total += reqLine.getQuantity() * reqLine.getProduct().getPrice();
 		}
 		request.setTotal(total);
